@@ -1,0 +1,211 @@
+//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
+// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+void main(){}
+        private static final int TOTAL_BEDS = 20;
+        private static Patient[] patients = new Patient[100];
+        private static boolean[] bedStatus = new boolean[TOTAL_BEDS + 1];
+        private static int patientCount = 0;
+        private static int nextPatientID = 1;
+        private static Scanner scanner = new Scanner(System.in);
+
+        public static void main(String[] args) {
+            int choice;
+            do {
+                System.out.println("\n===== MEDI-CARE HOSPITAL SYSTEM =====");
+                System.out.println("1. Register New Patient");
+                System.out.println("2. Search Patient by ID");
+                System.out.println("3. Update Patient Details");
+                System.out.println("4. Delete Patient");
+                System.out.println("5. Display All Patients");
+                System.out.println("6. View Bed Status");
+                System.out.println("0. Exit");
+                System.out.print("Enter choice: ");
+                choice = scanner.nextInt();
+                scanner.nextLine();
+
+                switch(choice) {
+                    case 1: registerPatient(); break;
+                    case 2: searchPatient(); break;
+                    case 3: updatePatient(); break;
+                    case 4: deletePatient(); break;
+                    case 5: displayAllPatients(); break;
+                    case 6: viewBedStatus(); break;
+                    case 0: System.out.println("Exiting..."); break;
+                    default: System.out.println("Invalid choice");
+                }
+            } while(choice == 0);
+        }
+
+        public static void registerPatient() {
+            System.out.print("Enter First Name: ");
+            String firstName = scanner.nextLine();
+            System.out.print("Enter Last Name: ");
+            String lastName = scanner.nextLine();
+            System.out.print("Enter Age: ");
+            int age = scanner.nextInt();
+            scanner.nextLine();
+            System.out.print("Enter Gender [M/F]: ");
+            String gender = scanner.nextLine();
+            System.out.print("Enter Medical Condition: ");
+            String condition = scanner.nextLine();
+            System.out.print("Enter Patient Category [Inpatient/Outpatient/Emergency]: ");
+            String category = scanner.nextLine();
+
+            int bed = 0;
+            if(category.equalsIgnoreCase("Inpatient") || category.equalsIgnoreCase("Emergency")) {
+                bed = findAvailableBed();
+                if(bed == -1) {
+                    System.out.println("No beds available for " + category + " patients!");
+                    return;
+                }
+                bedStatus[bed] = true;
+            }
+
+            Patient p = new Patient(nextPatientID++, firstName, lastName, age, gender, condition, category, bed);
+            patients[patientCount++] = p;
+            System.out.println("Patient registered successfully! ID: " + p.getPatientID() + " Bed: " + (bed == 0? "N/A" : bed));
+        }
+
+        public static int findAvailableBed() {
+            for(int i = 1; i <= TOTAL_BEDS; i++) {
+                if(!bedStatus[i]) return i;
+            }
+            return -1;
+        }
+        public static void searchPatient() {
+            System.out.print("Enter Patient ID: ");
+            int id = scanner.nextInt();
+            Patient p = getPatientByID(id);
+            if(p!= null) System.out.println(p);
+            else System.out.println("Patient not found.");
+        }
+
+        public static void updatePatient() {
+            System.out.print("Enter Patient ID to update: ");
+            int id = scanner.nextInt();
+            scanner.nextLine();
+            Patient p = getPatientByID(id);
+            if(p == null) {
+                System.out.println("Patient not found.");
+                return;
+            }
+            System.out.println("Current: " + p);
+            System.out.print("Enter new Medical Condition: ");
+            p.setMedicalCondition(scanner.nextLine());
+            System.out.print("Enter new Patient Category: ");
+            p.setPatientCategory(scanner.nextLine());
+            System.out.println("Patient updated successfully.");
+        }
+
+        public static void deletePatient() {
+            System.out.print("Enter Patient ID to delete: ");
+            int id = scanner.nextInt();
+            for(int i = 0; i < patientCount; i++) {
+                if(patients[i]!= null && patients[i].getPatientID() == id) {
+                    int bed = patients[i].getBedNumber();
+                    if(bed > 0) bedStatus[bed] = false; // free bed
+                    patients[i] = null;
+                    System.out.println("Patient deleted. Bed " + bed + " is now free.");
+                    return;
+                }
+            }
+            System.out.println("Patient not found.");
+        }
+
+        public static void displayAllPatients() {
+            System.out.println("\n--- ALL REGISTERED PATIENTS ---");
+            boolean found = false;
+            for(int i = 0; i < patientCount; i++) {
+                if(patients[i]!= null) {
+                    System.out.println(patients[i]);
+                    found = true;
+                }
+            }
+            if(!found) System.out.println("No patients registered.");
+        }
+
+        public static void viewBedStatus() {
+            System.out.println("\n--- BED STATUS ---");
+            for(int i = 1; i <= TOTAL_BEDS; i++) {
+                System.out.print(bedStatus[i]? "[Bed " + i + ": OCCUPIED] " : "[Bed " + i + ": FREE] ");
+                if(i % 5 == 0) System.out.println();
+            }
+        }
+
+        public static Patient getPatientByID(int id) {
+            for(int i = 0; i < patientCount; i++) {
+                if(patients[i]!= null && patients[i].getPatientID() == id) {
+                    return patients[i];
+                }
+            }
+            return null;
+        }
+
+
+
+public class Patient {
+    int patientID;
+    String FirstName;
+    String LastName;
+    int Age;
+    String Gender;
+    String MedicalCondition;
+    String PatientCategory;
+    int bedNumber;
+
+    public Patient(int patientID, String FirstName, String LastName, int Age, String Gender, String MedicalCondition, String PatientCategory, int bedNumber) {
+        this.patientID = patientID;
+        this.FirstName = FirstName;
+        this.LastName = LastName;
+        this.Age = Age;
+        this.Gender=Gender;
+        this.MedicalCondition = MedicalCondition;
+        this.PatientCategory = PatientCategory;
+        this.bedNumber = bedNumber;
+    }
+    public int getPatientID() {return patientID; }
+
+    public String getFirstName() {
+        return FirstName;
+    }
+
+    public String getLastName() {
+        return LastName;
+    }
+
+    public int getAge() {
+        return Age;
+    }
+
+    public String getGender() {
+        return Gender;
+    }
+
+    public String getMedicalCondition() {
+        return MedicalCondition;
+    }
+
+    public String getPatientCategory() {
+        return PatientCategory;
+    }
+
+    public int getBedNumber() {
+        return bedNumber;
+    }
+    public void setFirstName(String FirstName) { this.FirstName = FirstName; }
+    public void setLastName(String LastName) { this.LastName= LastName; }
+    public void setAge(int Age) { this.Age = Age; }
+    public void setGender(String Gender) { this.Gender = Gender; }
+    public void setMedicalCondition(String MedicalCondition) { this.MedicalCondition = MedicalCondition; }
+    public void setPatientCategory(String PatientCategory) { this.PatientCategory = PatientCategory; }
+    public void setBedNumber(int bedNumber) { this.bedNumber = bedNumber; }
+
+    @Override
+    public String toString() {
+        return "ID: " + patientID + " Name: " + FirstName + " " + LastName +
+                "  Age: " + Age + "  Gender: " + Gender +
+                "  Condition: " + MedicalCondition + " | Category: " + PatientCategory +
+                " |Bed: " + (bedNumber == 0? "N/A" : bedNumber);
+    }
+}
+
