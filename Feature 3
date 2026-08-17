@@ -1,0 +1,544 @@
+import java.util.Scanner;
+
+public class Main {
+    
+    private static final int ROWS = 4;
+    private static final int COLS = 5;
+    private static final int TOTAL_BEDS = 20;
+
+    private static patient[] patients = new patient[50];
+    
+    private static int[] beds = new int[TOTAL_BEDS + 1];
+
+    private static int patientCount = 0;
+    private static int nextPatientID = 1;
+
+    private static Scanner scanner = new Scanner(System.in);
+    
+    public static void main(String[] args) {
+
+        int choice;
+
+        do {
+
+            System.out.println();
+            System.out.println("======================================");
+            System.out.println("       MEDI-CARE HOSPITAL SYSTEM");
+            System.out.println("======================================");
+
+            System.out.println("\n--- BED MANAGEMENT ---");
+            System.out.println("1. Register Patient");
+            System.out.println("2. Allocate Bed to Inpatient");
+            System.out.println("3. Release Bed / Discharge Patient");
+            System.out.println("4. Display Complete Ward Layout");
+            System.out.println("5. Display Available Beds");
+            System.out.println("6. Display Occupied Beds");
+
+            System.out.println("\n--- REPORTS ---");
+            System.out.println("7. Display All Registered Patients");
+            System.out.println("8. Display All Available Beds");
+            System.out.println("9. Display All Occupied Beds");
+            System.out.println("10. Display Total Registered Patients");
+            System.out.println("11. Display Total Occupied Beds");
+            System.out.println("12. Display Ward Occupancy Percentage");
+
+            System.out.println("\n0. Exit");
+
+            System.out.print("\nEnter choice: ");
+            choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+
+                case 1:
+                    registerPatient();
+                    break;
+
+                case 2:
+                    allocateBed();
+                    break;
+
+                case 3:
+                    releaseBed();
+                    break;
+
+                case 4:
+                    displayWardLayout();
+                    break;
+
+                case 5:
+                    displayAvailableBeds();
+                    break;
+
+                case 6:
+                    displayOccupiedBeds();
+                    break;
+
+                case 7:
+                    displayAllPatients();
+                    break;
+
+                case 8:
+                    displayAvailableBeds();
+                    break;
+
+                case 9:
+                    displayOccupiedBeds();
+                    break;
+
+                case 10:
+                    displayTotalPatients();
+                    break;
+
+                case 11:
+                    displayTotalOccupiedBeds();
+                    break;
+
+                case 12:
+                    displayOccupancyPercentage();
+                    break;
+
+                case 0:
+                    System.out.println("\nExiting Bed Management System...");
+                    break;
+
+                default:
+                    System.out.println("\nInvalid choice. Please try again.");
+            }
+
+        } while (choice != 0);
+
+        scanner.close();
+    }
+
+
+
+    public static void registerPatient() {
+
+        if (patientCount >= patients.length) {
+
+            System.out.println("Patient limit reached.");
+            return;
+        }
+
+        System.out.println("\n--- REGISTER PATIENT ---");
+
+        System.out.print("Enter First Name: ");
+        String firstName = scanner.nextLine();
+
+        System.out.print("Enter Last Name: ");
+        String lastName = scanner.nextLine();
+
+        System.out.print(
+                "Enter Category [Inpatient/Outpatient/Emergency]: "
+        );
+
+        String category = scanner.nextLine();
+
+
+        if (!category.equalsIgnoreCase("Inpatient")
+                && !category.equalsIgnoreCase("Outpatient")
+                && !category.equalsIgnoreCase("Emergency")) {
+
+            System.out.println(
+                    "Invalid category. Please enter Inpatient, Outpatient or Emergency."
+            );
+
+            return;
+        }
+
+        patients[patientCount] = new patient(
+                nextPatientID,
+                firstName,
+                lastName,
+                category
+        );
+
+        System.out.println(
+                "\nPatient registered successfully!"
+        );
+
+        System.out.println(
+                "Patient ID: " + nextPatientID
+        );
+
+        patientCount++;
+        nextPatientID++;
+    }
+
+
+
+    public static void allocateBed() {
+
+        System.out.println("\n--- ALLOCATE BED ---");
+
+        System.out.print("Enter Patient ID to allocate bed: ");
+        int id = scanner.nextInt();
+        scanner.nextLine();
+
+        patient p = getPatientByID(id);
+
+        if (p == null) {
+
+            System.out.println("Patient not found.");
+            return;
+        }
+
+
+        if (!p.getPatientCategory().equalsIgnoreCase("Inpatient")) {
+
+            System.out.println(
+                    "Error: Only Inpatients may be allocated a hospital bed."
+            );
+
+            return;
+        }
+
+
+        if (p.getBedNumber() != 0) {
+
+            System.out.println(
+                    "Patient already has bed B"
+                            + String.format("%02d", p.getBedNumber())
+            );
+
+            return;
+        }
+
+        // Find available bed
+        int bed = findAvailableBed();
+
+        if (bed == -1) {
+
+            System.out.println(
+                    "No beds available. Cannot allocate."
+            );
+
+            return;
+        }
+
+        // Allocate bed
+        beds[bed] = p.getPatientID();
+
+        p.setBedNumber(bed);
+
+        System.out.println(
+                "Success! Bed B"
+                        + String.format("%02d", bed)
+                        + " allocated to "
+                        + p.getFirstName()
+                        + " "
+                        + p.getLastName()
+        );
+    }
+
+
+
+    public static void releaseBed() {
+
+        System.out.println("\n--- RELEASE BED / DISCHARGE PATIENT ---");
+
+        System.out.print("Enter Patient ID to discharge: ");
+        int id = scanner.nextInt();
+        scanner.nextLine();
+
+        patient p = getPatientByID(id);
+
+        if (p == null) {
+
+            System.out.println("Patient not found.");
+            return;
+        }
+
+        int bed = p.getBedNumber();
+
+        if (bed == 0) {
+
+            System.out.println(
+                    "Patient does not currently have a bed."
+            );
+
+            return;
+        }
+        
+        beds[bed] = 0;
+        
+        p.setBedNumber(0);
+
+        System.out.println(
+                "Bed B"
+                        + String.format("%02d", bed)
+                        + " released successfully."
+        );
+
+        System.out.println(
+                "Patient "
+                        + p.getFirstName()
+                        + " "
+                        + p.getLastName()
+                        + " has been discharged."
+        );
+    }
+    
+    public static void displayWardLayout() {
+
+        System.out.println();
+        System.out.println("--- COMPLETE WARD LAYOUT 4x5 ---");
+
+        int bedNumber = 1;
+
+        for (int row = 0; row < ROWS; row++) {
+
+            for (int column = 0; column < COLS; column++) {
+
+                String status;
+
+                if (beds[bedNumber] == 0) {
+
+                    status = "FREE";
+
+                } else {
+
+                    status = "OCC";
+                }
+
+                System.out.printf(
+                        "B%02d[%s] ",
+                        bedNumber,
+                        status
+                );
+
+                bedNumber++;
+            }
+
+            System.out.println();
+        }
+    }
+    
+    public static void displayAvailableBeds() {
+
+        System.out.println("\n--- AVAILABLE BEDS ---");
+
+        boolean found = false;
+
+        for (int i = 1; i <= TOTAL_BEDS; i++) {
+
+            if (beds[i] == 0) {
+
+                System.out.print(
+                        "B" + String.format("%02d", i) + " "
+                );
+
+                found = true;
+            }
+        }
+
+        if (!found) {
+
+            System.out.print("None");
+        }
+
+        System.out.println();
+    }
+    
+    public static void displayOccupiedBeds() {
+
+        System.out.println("\n--- OCCUPIED BEDS ---");
+
+        boolean found = false;
+
+        for (int i = 1; i <= TOTAL_BEDS; i++) {
+
+            if (beds[i] != 0) {
+
+                patient p = getPatientByID(beds[i]);
+
+                if (p != null) {
+
+                    System.out.println(
+                            "B"
+                                    + String.format("%02d", i)
+                                    + " -> Patient ID: "
+                                    + p.getPatientID()
+                                    + " | "
+                                    + p.getFirstName()
+                                    + " "
+                                    + p.getLastName()
+                    );
+
+                    found = true;
+                }
+            }
+        }
+
+        if (!found) {
+
+            System.out.println("None");
+        }
+    }
+    
+    public static void displayAllPatients() {
+
+        System.out.println("\n--- ALL REGISTERED PATIENTS ---");
+
+        if (patientCount == 0) {
+
+            System.out.println("No patients registered.");
+            return;
+        }
+
+        for (int i = 0; i < patientCount; i++) {
+
+            if (patients[i] != null) {
+
+                System.out.println(patients[i]);
+            }
+        }
+    }
+
+
+
+    public static void displayTotalPatients() {
+
+        System.out.println("\n--- TOTAL REGISTERED PATIENTS ---");
+
+        System.out.println(
+                "Total registered patients: " + patientCount
+        );
+    }
+
+
+    public static void displayTotalOccupiedBeds() {
+
+        int occupiedBeds = 0;
+
+        for (int i = 1; i <= TOTAL_BEDS; i++) {
+
+            if (beds[i] != 0) {
+
+                occupiedBeds++;
+            }
+        }
+
+        System.out.println("\n--- TOTAL OCCUPIED BEDS ---");
+
+        System.out.println(
+                "Total occupied beds: " + occupiedBeds
+        );
+    }
+
+
+
+    public static void displayOccupancyPercentage() {
+
+        int occupiedBeds = 0;
+
+        for (int i = 1; i <= TOTAL_BEDS; i++) {
+
+            if (beds[i] != 0) {
+
+                occupiedBeds++;
+            }
+        }
+
+        double occupancyPercentage =
+                ((double) occupiedBeds / TOTAL_BEDS) * 100;
+
+        System.out.println("\n--- WARD OCCUPANCY ---");
+
+        System.out.println(
+                "Occupied beds: " + occupiedBeds
+        );
+
+        System.out.println(
+                "Total beds: " + TOTAL_BEDS
+        );
+
+        System.out.printf(
+                "Ward occupancy percentage: %.2f%%%n",
+                occupancyPercentage
+        );
+    }
+
+
+    public static int findAvailableBed() {
+
+        for (int i = 1; i <= TOTAL_BEDS; i++) {
+
+            if (beds[i] == 0) {
+
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+
+    public static patient getPatientByID(int id) {
+
+        for (int i = 0; i < patientCount; i++) {
+
+            if (patients[i] != null
+                    && patients[i].getPatientID() == id) {
+
+                return patients[i];
+            }
+        }
+
+        return null;
+    }
+}
+
+
+
+public class patient {
+
+    private int patientID;
+    private String firstName;
+    private String lastName;
+    private String patientCategory;
+    private int bedNumber;
+
+    public patient(int patientID, String firstName, String lastName, String patientCategory) {
+        this.patientID = patientID;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.patientCategory = patientCategory;
+        this.bedNumber = 0;
+    }
+
+    public int getPatientID() {
+        return patientID;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getPatientCategory() {
+        return patientCategory;
+    }
+
+    public int getBedNumber() {
+        return bedNumber;
+    }
+
+    public void setBedNumber(int bedNumber) {
+        this.bedNumber = bedNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "ID: " + patientID
+                + " " + firstName
+                + " " + lastName
+                + " | Category: " + patientCategory
+                + " | Bed: "
+                + (bedNumber == 0 ? "N/A" : "B" + String.format("%02d", bedNumber));
+    }
+}
